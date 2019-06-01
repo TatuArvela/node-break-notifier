@@ -1,0 +1,11 @@
+{
+  "name": "node-break-notifier",
+  "version": "1.0.0",
+  "main": "app.js",
+  "author": "Tatu Arvela",
+  "license": "MIT",
+  "dependencies": {
+    "dialog": "^0.3.1",
+    "node-notifier": "^5.1.2"
+  }
+}
