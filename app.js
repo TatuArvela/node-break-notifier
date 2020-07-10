@@ -1,115 +1,52 @@
-const os = require('os');
-const notifier = require('node-notifier');
-const WindowsToaster = new notifier.WindowsToaster();
-const WindowsBalloon = new notifier.WindowsBalloon();
-const NotifySend = new notifier.NotifySend();
-const dialog = require('dialog');
+import * as path from "path";
+import * as readline from "readline";
+import notifier from "node-notifier";
+import timer from "./timer.js";
+import { clearScreen } from "./utils.js";
 
-var mode = 'dialog';
-var arguments = process.argv;
-if (arguments.includes('notification')) {
-    mode = 'notification';
-}
-else if (arguments.includes('dialog')) {
-    mode = 'dialog';
-}
+const __dirname = path.resolve();
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
-var timeoutStartTime;
-var timeoutTime;
-var timeout;
+const timeoutInMinutes = 0.05;
 
-function breakTimer(minutes, mode) {
-    timeoutStartTime = new Date().getTime();
-    timeoutTime = minutes;
-    timeout = setTimeout(function() {
+const TIME_REMAINING = "⏰  Aikaa seuraavaan taukomuistutukseen";
+const REMINDER_MISSED =
+  "🚶  Tauon paikka. Käynnistä kello uudelleen painamalla Enter >";
+const ON_EXIT = "👋  Muistathan sitten välillä jaloitella!";
 
-    if (mode === "notification") {
-        // Windows
-        if (os.platform() === 'win32') {
+const BREAK_REMINDER_TITLE = "Taukomuistutus";
+const BREAK_REMINDER_MESSAGE = `Pidä tauko, ja nouse jaloittelemaan!`;
 
-            // 8 or 10
-            if (os.release().substring(0,2) === '8.' || os.release().substring(0,2) === '10') {
-                WindowsToaster.notify({
-                    'title': 'Taukomuistutus',
-                    'message': 'Pidä tauko, ja nouse jaloittelemaan!\nVahvista tauko klikkaamalla tätä.',
-                    'wait': true
-                }, function(error, response) {
-                    if (response == "the user clicked on the toast.") {
-                        WindowsToaster.notify({
-                            'title': 'Tauko vahvistettu',
-                            'message': 'Hyvä! Tauot vähentävät rasitusta.\nSeuraavasta tauosta muistutetaan 45 minuutin päästä.'
-                        });
-                        breakTimer(45, mode);
-                    }
-                    if (response == "the toast has timed out") {
-                        breakTimer(10/60, mode);
-                    }
-                });
-            }
+const breakReminder = {
+  title: BREAK_REMINDER_TITLE,
+  message: BREAK_REMINDER_MESSAGE,
+  icon: path.join(__dirname, "alarm-clock.png"),
+  sound: true,
+  wait: true,
+};
 
-            // Older
-            else {
-                WindowsBalloon.notify({
-                    'title': 'Taukomuistutus',
-                    'message': 'Pidä tauko, ja nouse jaloittelemaan!',
-                    'type': 'info'
-                }, function(error, response) {
-                    WindowsBalloon.notify({
-                        'title': 'Tauot vähentävät rasitusta',
-                        'message': 'Seuraavasta tauosta muistutetaan 45 minuutin päästä'
-                    });
-                    breakTimer(45, mode);
-                })
-            }
-        }
+rl.on("close", function () {
+  clearScreen();
+  console.log(ON_EXIT);
+  process.exit(0);
+});
 
-        // Ubuntu
-        else {
-            NotifySend.notify({
-                'title': 'Taukomuistutus',
-                'message': 'Pidä tauko, ja nouse jaloittelemaan!'
-            }, function() {
-                NotifySend.notify({
-                    'title': 'Tauot vähentävät rasitusta',
-                    'message': 'Seuraavasta tauosta muistutetaan 45 minuutin päästä'
-                });
-                breakTimer(45, mode);
-            })
-        }
-    }
-    if (mode === 'dialog') {
-        dialog.info('Pidä tauko, ja nouse jaloittelemaan!', 'Taukomuistutus', function() {
-            dialog.info('Seuraavasta tauosta muistutetaan 45 minuutin päästä', 'Tauot vähentävät rasitusta', function() {
-                breakTimer(45, mode);
-            })
-        })
-    }
+const waitForInput = () => {
+  clearScreen();
+  rl.question(REMINDER_MISSED, () => {
+    app();
+  });
+};
 
-    }, minutes * 60 * 1000);
-}
+const app = () => {
+  timer(timeoutInMinutes, TIME_REMAINING).then(() =>
+    notifier.notify(breakReminder, () => {
+      waitForInput();
+    })
+  );
+};
 
-breakTimer(1/60, mode);
-
-setInterval(function() {
-    process.stdout.clearLine();
-    process.stdout.cursorTo(0);
-    process.stdout.write("Aikaa seuraavaan taukomuistutukseen: " + timeleft());
-}, 1000);
-
-function timeleft() {
-    var currentTime = Math.ceil(new Date().getTime() / 1000);
-    var targetTime = Math.ceil(timeoutStartTime / 1000) + timeoutTime * 60;
-
-    var time = targetTime - currentTime;
-
-    var minutes = Math.floor(time / 60);
-    var seconds = time - minutes * 60;
-
-    if (minutes < 0) {
-        return "0:00";
-    }
-    else {
-        seconds = ('0' + seconds).slice(-2);
-        return minutes + ":" + seconds;
-    }
-}
+app();

@@ -1,11 +1,20 @@
 {
   "name": "node-break-notifier",
-  "version": "1.0.0",
-  "main": "app.js",
+  "description": "Node.js break notifier",
+  "version": "2.0.0",
   "author": "Tatu Arvela",
   "license": "MIT",
+  "repository": "https://github.com/TatuArvela/node-break-notifier.git",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "prettier": "prettier *.js --write"
+  },
   "dependencies": {
-    "dialog": "^0.3.1",
-    "node-notifier": "^5.1.2"
+    "node-notifier": "^7.0.1"
+  },
+  "devDependencies": {
+    "prettier": "^2.0.5"
   }
 }
