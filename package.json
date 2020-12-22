@@ -12,7 +12,7 @@
     "prettier": "prettier *.js --write"
   },
   "dependencies": {
-    "node-notifier": "^7.0.1"
+    "node-notifier": "^8.0.1"
   },
   "devDependencies": {
     "prettier": "^2.0.5"
